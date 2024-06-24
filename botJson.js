@@ -7,7 +7,7 @@ const modelfusion = require('modelfusion');
 require('dotenv').config();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-//console.log("OpenAI API Key:", OPENAI_API_KEY);
+//console.log("OpenAI API Key:", OPENAI_API_KEY); 
 
 app.use(express.json());
 
