@@ -1,0 +1,94 @@
+{
+  "name": "modelfusion",
+  "description": "The TypeScript library for building AI applications.",
+  "version": "0.137.0",
+  "author": "Lars Grammel",
+  "license": "MIT",
+  "keywords": [
+    "ai",
+    "llm",
+    "multimodal",
+    "embedding",
+    "openai",
+    "gpt-4",
+    "ollama",
+    "llamacpp",
+    "whisper"
+  ],
+  "homepage": "https://modelfusion.dev/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lgrammel/modelfusion"
+  },
+  "bugs": {
+    "url": "https://github.com/lgrammel/modelfusion/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "private": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "directory": "dist",
+    "linkDirectory": true
+  },
+  "files": [
+    "./*"
+  ],
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "module": "./index.js",
+      "require": "./index.cjs"
+    },
+    "./internal": {
+      "types": "./internal/index.d.ts",
+      "import": "./internal/index.js",
+      "module": "./internal/index.js",
+      "require": "./internal/index.cjs"
+    },
+    "./node": {
+      "types": "./node/index.d.ts",
+      "import": "./node/index.js",
+      "module": "./node/index.js",
+      "require": "./node/index.cjs"
+    }
+  },
+  "scripts": {
+    "lint": "eslint --ext .ts src",
+    "clean": "rimraf build dist .turbo node_modules",
+    "clean:build": "rimraf build dist",
+    "build": "tsup --dts && pnpm build:copy-files",
+    "build:copy-files": "copyfiles --flat package.json ../../README.md ../../LICENSE ../../CHANGELOG.md dist",
+    "build:dtsMap": "tsc --emitDeclarationOnly --declaration --declarationMap",
+    "dev": "tsup --watch src --onSuccess \"pnpm build:dtsMap\"",
+    "test": "vitest --config vitest.config.js --run src",
+    "test:watch": "vitest watch --config vitest.config.js",
+    "test:coverage": "vitest run --config vitest.config.js --coverage",
+    "test:coverage:ui": "vitest --config vitest.config.js --coverage --ui",
+    "dist": "pnpm clean:build && pnpm lint && pnpm test && pnpm build "
+  },
+  "dependencies": {
+    "eventsource-parser": "1.1.1",
+    "js-tiktoken": "1.0.7",
+    "nanoid": "3.3.6",
+    "secure-json-parse": "2.7.0",
+    "type-fest": "4.9.0",
+    "ws": "8.14.2",
+    "zod": "3.22.4",
+    "zod-to-json-schema": "3.22.3"
+  },
+  "devDependencies": {
+    "@types/node": "18.11.9",
+    "@types/ws": "^8.5.7",
+    "@typescript-eslint/eslint-plugin": "^6.1.0",
+    "@typescript-eslint/parser": "^6.1.0",
+    "@vitest/coverage-v8": "^1.1.0",
+    "@vitest/ui": "1.2.1",
+    "eslint": "^8.45.0",
+    "eslint-config-prettier": "9.1.0",
+    "msw": "2.1.2"
+  }
+}
