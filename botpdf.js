@@ -1,17 +1,17 @@
 const express = require('express');
 const fs = require('fs').promises;
 
-const {getDocument} = require('pdfjs-dist/legacy/build/pdf.js');
+const {getDocument, OPS} = require('pdfjs-dist/legacy/build/pdf.js');
 const openai = require('openai');    
 const app = express();
 
 require('dotenv').config();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-//console.log("OpenAI API Key:", OPENAI_API_KEY); 
+console.log("OpenAI API Key:", OPENAI_API_KEY); 
 
 const modelfusion = require('modelfusion');
-console.log("OpenAI API Key:", openai.apiKey);
+//console.log("OpenAI API Key:", openai.apiKey);
 
 const isPdf = (buffer) => {
   const pdfSignature = Buffer.from([0x25, 0x50, 0x44, 0x46, 0x2D]);
@@ -32,30 +32,38 @@ const extractTextFromPage = async (page) => {
 app.use(express.json());
 
 const extractImagesFromPage = async (page) => {
-  if (!page || !page.objs) {
-    return [];
-  }
-
-  const { objs } = page;
+  const ops = await page.getOperatorList();
   const images = [];
 
-  for (const objId of Object.keys(objs)) {
-    const obj = objs.get(objId);
+  for (let i = 0; i < ops.fnArray.length; i++) {
+    if (ops.fnArray[i] === OPS.paintImageXObject) {
+      const objId = ops.argsArray[i][0];
+      const obj = await new Promise((resolve) => {
+        const checkObj = () => {
+          const resolvedObj = page.objs.get(objId);
+          if (resolvedObj) {
+            resolve(resolvedObj);
+          } else {
+            setTimeout(checkObj, 100);
+          }
+        };
+        checkObj();
+      });
 
-    if (obj && obj.get('Subtype') && obj.get('Subtype').name === 'Image') {
-      const rawData = obj.get('Data');
-      const width = obj.get('Width');
-      const height = obj.get('Height');
-      const colorSpace = obj.get('ColorSpace').name;
-      const bitsPerComponent = obj.get('BitsPerComponent');
-
-      images.push({ rawData, width, height, colorSpace, bitsPerComponent });
+      if (obj) {
+        images.push({
+          rawData: obj.data,
+          width: obj.width,
+          height: obj.height,
+          colorSpace: obj.colorSpace ? obj.colorSpace.name : null,
+          bitsPerComponent: obj.bitsPerComponent,
+        });
+      }
     }
   }
 
-  return images;
+  return JSON.stringify(images);
 };
-
 
 const loadPdfPages = async (filePath) => {
   try {
@@ -65,7 +73,6 @@ const loadPdfPages = async (filePath) => {
       throw new Error("File is not a valid PDF");
     }
 
-    //console.log("pdfData :",pdfData);
     const pdf = await getDocument({
       data: new Uint8Array(
         pdfData.buffer,
@@ -75,13 +82,11 @@ const loadPdfPages = async (filePath) => {
       useSystemFonts: true,
     }).promise;
 
-
     const numPages = pdf.numPages;
     const pageContents = [];
 
     for (let i = 1; i <= numPages; i++) {
       const page = await pdf.getPage(i);
-      console.log("page : ",page);
       const text = await extractTextFromPage(page);
       const images = await extractImagesFromPage(page);
 
@@ -114,8 +119,7 @@ app.get('/startSession', async (req, res) => {
 
   try {
     const files = [
-        'C:/Users/as/Downloads/AI BOT/product-updates.pdf',
-        'C:/Users/as/Downloads/AI BOT/students-getting-a-multiple-tabs-error-message-16-8-2021.pdf'
+      'C:/Users/edcit/Downloads/BotApp/copy-questions1.pdf',
      ];
 
     const pages = [];
